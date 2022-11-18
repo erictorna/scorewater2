@@ -1,0 +1,156 @@
+---
+title: "farmacs"
+date: '`r Sys.time()`'
+author: 'ETN'
+output: 
+  html_document: 
+    toc: yes
+    toc_float: true
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(lubridate)
+library(knitr)
+library(kableExtra)
+library(survival)
+library(data.table)
+library(flextable)
+library(officer)
+library(GGally)
+library(survival)
+library(htmltools)
+library(dplyr)
+library(corrplot)
+library(RColorBrewer)
+library(ggpubr)
+library(cluster)
+library(factoextra) 
+library(devtools)
+library(FeatureImpCluster)
+library(flexclust)
+library(ggbiplot)
+knitr::opts_chunk$set(echo = FALSE)
+farmacs = readRDS("/home/idiap/projects/scorewater2/build.data/farmacsreals.rds")
+# conditions$casos_incidents<-NULL
+# conditions$poblacio_incident<-NULL
+knitr::opts_chunk$set(warning = FALSE, message = FALSE) 
+```
+
+```{r datatreatment, include=FALSE}
+# Agrupem per sexe i edat
+farmac = farmacs %>% group_by(scensal, date, Therapeutic_Group, Compound, municipi, provincia, codi_edar, Zona) %>% summarize_if(is.numeric, sum, na.rm=T)
+# Creem base de dades amb les poblacions de casa codi censal
+poblacio = farmac %>% group_by(scensal, date, municipi, provincia, codi_edar, Zona) %>% summarize_if(is.numeric, max, na.rm=T) %>% select(scensal, date, municipi, provincia, codi_edar, Zona, pob_SIDIAP_mensual, pob_real)
+# Ajuntem
+farmacs = farmac %>% select(scensal, date, Therapeutic_Group, Compound, municipi, provincia, codi_edar, Zona, nddd, env, `compocant (mg)`) %>% left_join(poblacio)
+# Filtrem pels barris del besos i per l'EDAR del besos en si
+setDT(farmacs)
+besos = farmacs[codi_edar == 'DBSS']
+barris = besos[!(is.na(Zona))]
+```
+
+# Compounds nddd
+
+```{r barrisbesos_compound, results='asis'}
+llistabarris = c('Carmel', 'Poblenou', 'St. Gervasi')
+dates = c('202103', '202104', '202105', '202106', '202107', '202108', '202109', '202110', '202111', '202112', '202201', '202202', '202203', '202204', '202205', '202206')
+barris = barris %>% group_by(date, Therapeutic_Group, Compound, Zona) %>% summarize_if(is.numeric, sum, na.rm=T)
+setDT(barris)
+for (i in llistabarris) {
+  cat(sprintf("\n\n## %s \n\n", i))
+  dfbarris = barris[Zona==i]
+  for (e in dates) {
+    cat(sprintf("\n\n### %s \n\n", e))
+    df = as.data.table(dfbarris[date==e])
+      print(ggplot() + 
+        geom_bar(data = df, aes(x=Compound, y=nddd), stat = 'identity') +
+        theme_minimal() +
+        ggtitle(sprintf('%s in %s', i, e)) +
+        labs(x = 'Compound', y = 'nddd') +
+        theme(axis.text.x = element_text(angle=80, hjust = 1)))
+      df = df %>% select(date, Compound, nddd, env, `compocant (mg)`)%>% group_by(date, Compound) %>% summarize_if(is.numeric, sum, na.rm=T)
+      print(kable_styling(kable(df)))
+  }
+
+}
+```
+
+# Therapeutic Group nddd
+
+```{r barrisbesos_therapeuticgroup, results='asis'}
+llistabarris = c('Carmel', 'Poblenou', 'St. Gervasi')
+dates = c('202103', '202104', '202105', '202106', '202107', '202108', '202109', '202110', '202111', '202112', '202201', '202202', '202203', '202204', '202205', '202206')
+barris = barris %>% group_by(date, Therapeutic_Group, Compound, Zona) %>% summarize_if(is.numeric, sum, na.rm=T)
+setDT(barris)
+for (i in llistabarris) {
+  cat(sprintf("\n\n## %s \n\n", i))
+  dfbarris = barris[Zona==i]
+  for (e in dates) {
+    cat(sprintf("\n\n### %s \n\n", e))
+    df = as.data.table(dfbarris[date==e])
+      print(ggplot() + 
+        geom_bar(data = df, aes(x=Therapeutic_Group, y=nddd), stat = 'identity') +
+        theme_minimal() +
+        ggtitle(sprintf('%s in %s', i, e)) +
+        labs(x = 'Therapeutic Group', y = 'nddd') +
+        theme(axis.text.x = element_text(angle=80, hjust = 1)))
+      df = df %>% select(date, Therapeutic_Group, nddd, env, `compocant (mg)`)%>% group_by(date, Therapeutic_Group) %>% summarize_if(is.numeric, sum, na.rm=T)
+      print(kable_styling(kable(df)))
+  }
+
+}
+```
+
+# Compounds mg
+
+```{r barrisbesos_compound2, results='asis'}
+llistabarris = c('Carmel', 'Poblenou', 'St. Gervasi')
+dates = c('202103', '202104', '202105', '202106', '202107', '202108', '202109', '202110', '202111', '202112', '202201', '202202', '202203', '202204', '202205', '202206')
+barris = barris %>% group_by(date, Therapeutic_Group, Compound, Zona) %>% summarize_if(is.numeric, sum, na.rm=T)
+setDT(barris)
+for (i in llistabarris) {
+  cat(sprintf("\n\n## %s \n\n", i))
+  dfbarris = barris[Zona==i]
+  for (e in dates) {
+    cat(sprintf("\n\n### %s \n\n", e))
+    df = as.data.table(dfbarris[date==e])
+      print(ggplot() + 
+        geom_bar(data = df, aes(x=Compound, y=`compocant (mg)`), stat = 'identity') +
+        theme_minimal() +
+        ggtitle(sprintf('%s in %s', i, e)) +
+        labs(x = 'Compound', y = 'mg') +
+        theme(axis.text.x = element_text(angle=80, hjust = 1)))
+      df = df %>% select(date, Compound, nddd, env, `compocant (mg)`)%>% group_by(date, Compound) %>% summarize_if(is.numeric, sum, na.rm=T)
+      print(kable_styling(kable(df)))
+  }
+
+}
+```
+
+# Therapeutic Group mg
+
+```{r barrisbesos_therapeuticgroup2, results='asis'}
+llistabarris = c('Carmel', 'Poblenou', 'St. Gervasi')
+dates = c('202103', '202104', '202105', '202106', '202107', '202108', '202109', '202110', '202111', '202112', '202201', '202202', '202203', '202204', '202205', '202206')
+barris = barris %>% group_by(date, Therapeutic_Group, Compound, Zona) %>% summarize_if(is.numeric, sum, na.rm=T)
+setDT(barris)
+for (i in llistabarris) {
+  cat(sprintf("\n\n## %s \n\n", i))
+  dfbarris = barris[Zona==i]
+  for (e in dates) {
+    cat(sprintf("\n\n### %s \n\n", e))
+    df = as.data.table(dfbarris[date==e])
+      print(ggplot() + 
+        geom_bar(data = df, aes(x=Therapeutic_Group, y=`compocant (mg)`), stat = 'identity') +
+        theme_minimal() +
+        ggtitle(sprintf('%s in %s', i, e)) +
+        labs(x = 'Therapeutic Group', y = 'mg') +
+        theme(axis.text.x = element_text(angle=80, hjust = 1)))
+      df = df %>% select(date, Therapeutic_Group, nddd, env, `compocant (mg)`) %>% group_by(date, Therapeutic_Group) %>% summarize_if(is.numeric, sum, na.rm=T)
+      print(kable_styling(kable(df)))
+  }
+}
+```
+
+

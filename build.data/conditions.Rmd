@@ -1,0 +1,47 @@
+---
+title: "Conditions"
+date: '`r Sys.time()`'
+author: 'ETN'
+output: 
+  html_document: 
+    toc: yes
+    toc_float: true
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(lubridate)
+library(knitr)
+library(kableExtra)
+library(survival)
+library(data.table)
+library(flextable)
+library(officer)
+library(GGally)
+library(survival)
+library(htmltools)
+library(dplyr)
+library(corrplot)
+library(RColorBrewer)
+library(ggpubr)
+library(cluster)
+library(factoextra) 
+library(devtools)
+library(FeatureImpCluster)
+library(flexclust)
+library(ggbiplot)
+knitr::opts_chunk$set(echo = FALSE)
+conditions = readRDS("/home/idiap/projects/scorewater2/build.data/conditionsreals.rds")
+conditions$casos_incidents<-NULL
+conditions$poblacio_incident<-NULL
+knitr::opts_chunk$set(warning = FALSE, message = FALSE) 
+```
+
+```{r datatreatment, include=FALSE}
+# Primer 'eliminem' les variables edat i sexe i sumem els casos de cada un per tenir les prevalençes de cada condicio per regió
+condition = conditions %>% group_by(scensal, condicio, provincia, codi_edar, municipi, Zona) %>% summarize_if(is.numeric, sum, na.rm=T)
+# Ens assegurem que tenim la mateixa poblacio prevalent en totes les condicions ja que algunes malalties poc comunes podiem tenir NA en alguna fila i modificarnos la poblacio en determinats casos
+poblacio_prevalent = condition %>% group_by(scensal, provincia, codi_edar, municipi, Zona) %>% summarize_if(is.numeric, max, na.rm=T) %>% select(scensal, provincia, codi_edar, municipi, Zona, poblacio_prevalent, pob_real)
+# Ajuntem les dues bases de dades per tenir la prevalença que toca en cada cas
+condition = condition %>% select(scensal, condicio, provincia, codi_edar, municipi, Zona, casos_prevalents) %>% left_join(poblacio_prevalent)
+```
