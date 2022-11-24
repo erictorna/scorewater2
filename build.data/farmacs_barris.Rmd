@@ -98,7 +98,6 @@ for (i in llistabarris) {
       df = df %>% select(date, Therapeutic_Group, nddd, env, `compocant (mg)`)%>% group_by(date, Therapeutic_Group) %>% summarize_if(is.numeric, sum, na.rm=T)
       print(kable_styling(kable(df)))
   }
-
 }
 ```
 
@@ -124,7 +123,6 @@ for (i in llistabarris) {
       df = df %>% select(date, Compound, nddd, env, `compocant (mg)`)%>% group_by(date, Compound) %>% summarize_if(is.numeric, sum, na.rm=T)
       print(kable_styling(kable(df)))
   }
-
 }
 ```
 

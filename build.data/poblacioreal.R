@@ -3,7 +3,7 @@ library(lubridate)
 library(readr)
 library(readODS)
 library(tidyverse)
-
+rename=dplyr::rename
 # Carreguem dades
 conditions <- readRDS('~/idiap/projects/scorewater2/build.data/conditions.rds')
 farmacs <- readRDS('~/idiap/projects/scorewater2/build.data/farmacs.rds')
@@ -22,7 +22,7 @@ catalunya = catalunya[edat!='Total']
 catalunya = catalunya[scensal!='TOTAL']
 # Sumem tots els membres de les categories 80+ generades anteriorment
 catalunya$Total<-as.numeric(catalunya$Total)
-catalunya = catalunya %>% group_by(Sexo, scensal, edat) %>% summarize_if(is.numeric, sum)
+catalunya = catalunya %>% group_by(Sexo, scensal, edat) %>% summarize_if(is.numeric, sum, na.rm=T)
 setDT(catalunya)
 # Arreglem la variable sexe
 catalunya = catalunya[Sexo!='Ambos Sexos']

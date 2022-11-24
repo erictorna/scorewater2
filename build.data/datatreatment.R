@@ -4,11 +4,12 @@ library(readr)
 library(readODS)
 library(tidyverse)
 library(dplyr)
+rename = dplyr::rename
 # Carreguem dades
 conditions <- readRDS('~idiap/data/scorewater/scorewater2/SCOREwater_entregable_conditions_20221110.rds')
 farmacs <- readRDS('~idiap/data/scorewater/scorewater2/SCOREwater_entregable_farmacs_20221110.rds')
 groups <- readRDS('~idiap/data/scorewater/scorewater2/SCOREwater_entregable_grups_ICD10MC_20221110.rds')
-barrisbesos=read_rds("/home/idiap/projects/scorewater/seccions_censals_barris.rds") %>% select(Zona, Sc2020) %>% rename(scensal=Sc2020)
+barrisbesos=read_rds("/home/idiap/projects/scorewater/seccions_censals_barris.rds") %>% select(Zona, Sc2020) %>% rename(scensal=Sc2020) %>% unique()
 
 # Per cada arxiu afegim un 0 davant dels codis censals curts i marquem quins d'ells pertanyen als barris de BCN-besos d'interès
 setDT(conditions)

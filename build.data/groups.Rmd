@@ -1,0 +1,58 @@
+---
+title: "Conditions"
+date: '`r Sys.time()`'
+author: 'ETN'
+output: 
+  html_document: 
+    toc: yes
+    toc_float: true
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(lubridate)
+library(knitr)
+library(kableExtra)
+library(survival)
+library(data.table)
+library(flextable)
+library(survival)
+library(htmltools)
+library(dplyr)
+knitr::opts_chunk$set(echo = FALSE)
+groups = readRDS("/home/idiap/projects/scorewater2/build.data/groupsreals.rds")
+groups$casos_incidents<-NULL
+groups$poblacio_incident<-NULL
+knitr::opts_chunk$set(warning = FALSE, message = FALSE) 
+```
+
+```{r datatreatment, include=FALSE}
+# Primer 'eliminem' les variables edat i sexe i sumem els casos de cada un per tenir les prevalençes de cada condicio per regió
+group = groups %>% group_by(scensal, grup_ICD10MC, subgrup, provincia, codi_edar, municipi, Zona) %>% summarize_if(is.numeric, sum, na.rm=T)
+# Ens assegurem que tenim la mateixa poblacio prevalent en totes les condicions ja que algunes malalties poc comunes podiem tenir NA en alguna fila i modificarnos la poblacio en determinats casos
+poblacio_prevalent = group %>% group_by(scensal, provincia, codi_edar, municipi, Zona) %>% summarize_if(is.numeric, max, na.rm=T) %>% select(scensal, provincia, codi_edar, municipi, Zona, poblacio_prevalent, pob_real)
+# Ajuntem les dues bases de dades per tenir la prevalença que toca en cada cas
+group = group %>% select(scensal, grup_ICD10MC, subgrup, provincia, codi_edar, municipi, Zona, casos_prevalents) %>% left_join(poblacio_prevalent)
+# Tenim 7 grups diferents de ICD10MC i 82 subgrups
+```
+
+
+```{r ICD10_groups, results='asis'}
+icd10 = group %>% group_by(grup_ICD10MC, Zona, codi_edar) %>% summarize_if(is.numeric, sum, na.rm=T) %>% mutate(prevalença100 = (casos_prevalents/poblacio_prevalent)*100) %>% mutate(codi_edar=ifelse(is.na(Zona), codi_edar, Zona))
+setDT(icd10)
+llistagrups = unique(c(group$grup_ICD10MC))
+for (i in llistagrups) {
+  cat(sprintf("\n\n## %s \n\n", i))
+    df = as.data.table(icd10[grup_ICD10MC==i])
+      print(ggplot() + 
+        geom_bar(data = df, aes(x=codi_edar, y=prevalença100), stat = 'identity') +
+        theme_minimal() +
+        ggtitle(i) +
+        labs(x = 'EDAR', y = 'prevalença (cada 100)') +
+          # scale_y_continuous(limits = c(1, 3)) +
+        theme(axis.text.x = element_text(angle=80, hjust = 1)))
+      df = df %>% select(grup_ICD10MC, casos_prevalents, poblacio_prevalent, prevalença100, codi_edar)%>% group_by(codi_edar) %>% summarize_if(is.numeric, sum, na.rm=T)
+      print(kable_styling(kable(df)))
+  }
+
+```

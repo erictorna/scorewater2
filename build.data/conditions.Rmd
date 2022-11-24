@@ -16,20 +16,20 @@ library(kableExtra)
 library(survival)
 library(data.table)
 library(flextable)
-library(officer)
-library(GGally)
+# library(officer)
+# library(GGally)
 library(survival)
 library(htmltools)
 library(dplyr)
-library(corrplot)
-library(RColorBrewer)
-library(ggpubr)
-library(cluster)
-library(factoextra) 
-library(devtools)
-library(FeatureImpCluster)
-library(flexclust)
-library(ggbiplot)
+# library(corrplot)
+# library(RColorBrewer)
+# library(ggpubr)
+# library(cluster)
+# library(factoextra) 
+# library(devtools)
+# library(FeatureImpCluster)
+# library(flexclust)
+# library(ggbiplot)
 knitr::opts_chunk$set(echo = FALSE)
 conditions = readRDS("/home/idiap/projects/scorewater2/build.data/conditionsreals.rds")
 conditions$casos_incidents<-NULL
@@ -44,4 +44,10 @@ condition = conditions %>% group_by(scensal, condicio, provincia, codi_edar, mun
 poblacio_prevalent = condition %>% group_by(scensal, provincia, codi_edar, municipi, Zona) %>% summarize_if(is.numeric, max, na.rm=T) %>% select(scensal, provincia, codi_edar, municipi, Zona, poblacio_prevalent, pob_real)
 # Ajuntem les dues bases de dades per tenir la prevalença que toca en cada cas
 condition = condition %>% select(scensal, condicio, provincia, codi_edar, municipi, Zona, casos_prevalents) %>% left_join(poblacio_prevalent)
+```
+
+```{r barrisbesos_compound, results='asis'}
+# Agrupem per EDAR
+edars = condition %>% group_by(codi_edar, condicio, provincia, municipi, Zona) %>% summarize_if(is.numeric, sum, na.rm=T)
+# Tenim 92 condicions diferents, no tinc gaire clar que fer un histograma de cada una sigui lo apropiat
 ```
