@@ -1,6 +1,6 @@
 ---
 title: "farmacs"
-date: '`r Sys.time()`'
+date: "`r format(Sys.time(), '%d %B, %Y')`"
 author: 'ETN'
 output: 
   html_document: 
@@ -16,20 +16,8 @@ library(kableExtra)
 library(survival)
 library(data.table)
 library(flextable)
-library(officer)
-library(GGally)
-library(survival)
-library(htmltools)
 library(dplyr)
-library(corrplot)
-library(RColorBrewer)
-library(ggpubr)
-library(cluster)
-library(factoextra) 
-library(devtools)
-library(FeatureImpCluster)
-library(flexclust)
-library(ggbiplot)
+
 knitr::opts_chunk$set(echo = FALSE)
 farmacs = readRDS("/home/idiap/projects/scorewater2/build.data/farmacsreals.rds")
 # conditions$casos_incidents<-NULL
@@ -53,26 +41,34 @@ barris = besos[!(is.na(Zona))]
 # Compounds nddd
 
 ```{r barrisbesos_compound, results='asis'}
+# Llistes per al loop
 llistabarris = c('Carmel', 'Poblenou', 'St. Gervasi')
 dates = c('202103', '202104', '202105', '202106', '202107', '202108', '202109', '202110', '202111', '202112', '202201', '202202', '202203', '202204', '202205', '202206')
+# Agrupem per data, grup i zona
 barris = barris %>% group_by(date, Therapeutic_Group, Compound, Zona) %>% summarize_if(is.numeric, sum, na.rm=T)
 setDT(barris)
+# loop begin
 for (i in llistabarris) {
+  # Index
   cat(sprintf("\n\n## %s \n\n", i))
+  # DB amb dades de només una zona
   dfbarris = barris[Zona==i]
   for (e in dates) {
+    # Sub-index
     cat(sprintf("\n\n### %s \n\n", e))
+    # Sub-DB amb dades d'una data
     df = as.data.table(dfbarris[date==e])
+    # Plot
       print(ggplot() + 
         geom_bar(data = df, aes(x=Compound, y=nddd), stat = 'identity') +
         theme_minimal() +
         ggtitle(sprintf('%s in %s', i, e)) +
         labs(x = 'Compound', y = 'nddd') +
         theme(axis.text.x = element_text(angle=80, hjust = 1)))
+      # Taula
       df = df %>% select(date, Compound, nddd, env, `compocant (mg)`)%>% group_by(date, Compound) %>% summarize_if(is.numeric, sum, na.rm=T)
       print(kable_styling(kable(df)))
   }
-
 }
 ```
 
