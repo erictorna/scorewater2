@@ -16,10 +16,10 @@ groups2 = groups %>% group_by(scensal, municipi, provincia, codi_edar, Zona, eda
                                                                                                                                             pob_real)
 groups2 = groups2 %>% group_by(scensal, municipi, provincia, codi_edar, Zona) %>% summarize_if(is.numeric, sum, na.rm=TRUE)
 
-groups = groups %>% group_by(scensal, grup_ICD10MC, municipi, provincia, codi_edar, Zona) %>%
+groups = groups %>% group_by(scensal, grup_ICD10MC, subgrup, municipi, provincia, codi_edar, Zona) %>%
   summarize_if(is.numeric, sum, na.rm=T) %>% select(-poblacio_prevalent, -pob_real)
 
 groups = full_join(groups, groups2)
 groups = groups %>% mutate(`prevalencia(%)`=round((casos_prevalents/poblacio_prevalent)*100, 2))
 saveRDS(groups, file='~/idiap/projects/scorewater2/build.data/grups_definitius.rds')
-
+# write.csv(groups, '~/idiap/projects/scorewater2/groups.csv')
